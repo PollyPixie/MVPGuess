@@ -7,7 +7,11 @@
 
 import Foundation
 
-final class CharacterManager {
+protocol ICharacterManager {
+    func getRandomCharacters(count: Int) -> [Character]
+}
+
+final class CharacterManager: ICharacterManager {
     
     private let characters: [Character] = [
         Character(id: 1, name: "Кот Матроскин", imageName: "Cat"),
