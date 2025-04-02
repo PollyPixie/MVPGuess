@@ -19,15 +19,18 @@ final class GamePresenter {
     
     private weak var view: IGameViewController?
     private let characterManager: ICharacterManager
+   
+    private let router: GameRouter
     
     private var currentOptions: [Character] = []
     private var correctCharacter: Character?
     
     private var score = 0
     
-    init(view: IGameViewController, characterManager: ICharacterManager ) {
+    init(view: IGameViewController, characterManager: ICharacterManager, router: GameRouter) {
         self.view = view
         self.characterManager = characterManager
+        self.router = router
     }
 }
 
@@ -43,6 +46,7 @@ extension GamePresenter: IGamePresenter {
             OptionViewModel(id: $0.id, imageName: $0.imageName)
         }
         let viewModel = GameViewModel(questionText: question, options: options)
+        
         view?.render(viewModel: viewModel)
     }
     
@@ -53,10 +57,18 @@ extension GamePresenter: IGamePresenter {
         } else {
             score = max(score - 1, 0)
         }
-        view?.showResult(isCorrect: isCorrect, score: score)
+        
+        router.showResultAlert(isCorrect: isCorrect, score: score)
     }
     
     func getScore() -> Int {
         score
+    }
+}
+
+// MARK: - GameRouterDelegate Conformance
+extension GamePresenter: GameRouterDelegate {
+    func continueGame() {
+        loadNewQuestion()
     }
 }

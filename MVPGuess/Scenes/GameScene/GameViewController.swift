@@ -10,7 +10,6 @@ import UIKit
 // MARK: - IGameViewController Protocol
 protocol IGameViewController: AnyObject {
     func render(viewModel: GameViewModel)
-    func showResult(isCorrect: Bool, score: Int)
 }
 
 // MARK: - GameViewController Class
@@ -19,11 +18,13 @@ final class GameViewController: UIViewController {
     var presenter: IGamePresenter?
     
     private let questionLabel = UILabel()
-    private var optionButtons: [UIButton] = []
-    
+    private let buttons: [UIButton] = [UIButton(), UIButton(), UIButton()]
+    private let stackView = UIStackView()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setupButtons()
         presenter?.loadNewQuestion()
     }
 }
@@ -34,62 +35,11 @@ extension GameViewController: IGameViewController {
     func render(viewModel: GameViewModel) {
         questionLabel.text = viewModel.questionText
         
-        optionButtons.forEach { $0.removeFromSuperview() }
-        optionButtons = []
-        
-        for option in viewModel.options {
-            let button = UIButton(type: .system)
-            
-            button.backgroundColor = .white
-            button.clipsToBounds = true
-            button.layer.cornerRadius = 8
-            button.layer.borderWidth = 1
-            button.layer.borderColor = UIColor.lightGray.cgColor
-            
-            if let image = UIImage(named: option.imageName) {
-                let imageView = UIImageView(image: image)
-                imageView.contentMode = .scaleAspectFit
-                imageView.translatesAutoresizingMaskIntoConstraints = false
-                button.addSubview(imageView)
-                
-                NSLayoutConstraint.activate([
-                    imageView.topAnchor.constraint(equalTo: button.topAnchor, constant: 0),
-                    imageView.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -2),
-                    imageView.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 2),
-                    imageView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: 0)
-                ])
-            } else {
-                button.setTitle("Нет изображения", for: .normal)
-            }
-            
+        for (index, option) in viewModel.options.enumerated() {
+            let button = buttons[index]
+            button.setImage(UIImage(named: option.imageName), for: .normal)
             button.tag = option.id
-            button.addTarget(self, action: #selector(optionTapped(_:)), for: .touchUpInside)
-            button.translatesAutoresizingMaskIntoConstraints = false
-            
-            view.addSubview(button)
-            optionButtons.append(button)
         }
-        
-        layoutButtons()
-    }
-    
-    func showResult(isCorrect: Bool, score: Int) {
-        let title = isCorrect ? "Правильно!" : "Неправильно"
-        let message = "Текущий счёт: \(score)"
-        
-        let alert = UIAlertController(
-            title: title,
-            message: message,
-            preferredStyle: .alert
-        )
-        
-        alert.addAction(
-            UIAlertAction(title: "Продолжить", style: .default) { [weak self] _ in
-                self?.presenter?.loadNewQuestion()
-            }
-        )
-        
-        present(alert, animated: true)
     }
 }
 
@@ -112,26 +62,37 @@ private extension GameViewController {
         view.addSubview(questionLabel)
         questionLabel.translatesAutoresizingMaskIntoConstraints = false
         
+        stackView.axis = .vertical
+        stackView.spacing = 24
+        stackView.alignment = .center
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(stackView)
+        
         NSLayoutConstraint.activate([
             questionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            questionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            questionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            stackView.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: 30),
+            stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
     
-    func layoutButtons() {
-        for (index, button) in optionButtons.enumerated() {
-            if index == 0 {
-                NSLayoutConstraint.activate([
-                    button.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: 50)
-                ])
-            } else {
-                NSLayoutConstraint.activate([
-                    button.topAnchor.constraint(equalTo: optionButtons[index - 1].bottomAnchor, constant: 50)
-                ])
-            }
+    func setupButtons() {
+        for (index, button) in buttons.enumerated() {
+            button.tag = index
+            button.backgroundColor = .white
+            button.clipsToBounds = true
+            button.layer.cornerRadius = 8
+            button.layer.borderWidth = 1
+            button.layer.borderColor = UIColor.lightGray.cgColor
+            button.imageView?.contentMode = .scaleAspectFit
+            button.translatesAutoresizingMaskIntoConstraints = false
+            
+            button.addTarget(self, action: #selector(optionTapped(_:)), for: .touchUpInside)
+            stackView.addArrangedSubview(button)
             
             NSLayoutConstraint.activate([
-                button.centerXAnchor.constraint(equalTo: view.centerXAnchor),
                 button.widthAnchor.constraint(equalToConstant: 250),
                 button.heightAnchor.constraint(equalToConstant: 100)
             ])

@@ -11,10 +11,10 @@ final class GameAssembly {
     
     static func assemble() -> UIViewController {
         let viewController = GameViewController()
-        let presenter = GamePresenter(
-            view: viewController,
-            characterManager: CharacterManager()
+        let router = GameRouter(viewController: viewController)
+        let presenter = GamePresenter(view: viewController, characterManager: CharacterManager(), router: router
         )
+        router.delegate = presenter
         viewController.presenter = presenter
         return viewController
     }
